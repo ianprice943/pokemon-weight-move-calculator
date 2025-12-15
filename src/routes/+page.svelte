@@ -1,4 +1,6 @@
 <script>
+    import MoveButton from "$lib/components/MoveButton.svelte";
+
   const basePokeAPIURL = "https://pokeapi.co/api/v2/"
 
   let move = $state("")
@@ -15,6 +17,18 @@
     return kg
   })
   let allPokemon = $state([])
+
+  function setMove(newMove) {
+    move = newMove
+  }
+
+  function setUser(newUser) {
+    user = newUser
+  }
+
+  function setTarget(newTarget) {
+    target = newTarget
+  }
 
   function checkLocalStorage(key) {
     const localStorageCheck = localStorage.getItem(key)
@@ -127,59 +141,116 @@
   <h1>Welcome to The Weight Based Moves Calculator!</h1>
 </header>
 <main>
-  <section>
-    <h2>Select a move to get started</h2>
-    <form id="moveForm">
-      <select bind:value={move}>
-        <option value="low-kick">Low Kick</option>
-        <option value="grass-knot">Grass Knot</option>
-        <option value="heat-crash">Heat Crash</option>
-        <option value="heavy-slam">Heavy Slam</option>
+  <h2>Select a move to get started</h2>
+  <form id="moveForm">
+    <!-- <label for="move" class="sr-only">Move: </label>
+    <select id="move" bind:value={move}>
+      <option value="low-kick">Low Kick</option>
+      <option value="grass-knot">Grass Knot</option>
+      <option value="heat-crash">Heat Crash</option>
+      <option value="heavy-slam">Heavy Slam</option>
+    </select> -->
+    <div class="move-buttons">
+      <MoveButton 
+        name="Low Kick"
+        active={move === "low-kick"}
+        handleFunc={() => setMove("low-kick")}
+      />
+      <MoveButton 
+        name="Grass Knot"
+        active={move === "grass-knot"}
+        handleFunc={() => setMove("grass-knot")}
+      />
+      <MoveButton 
+        name="Heat Crash"
+        active={move === "heat-crash"}
+        handleFunc={() => setMove("heat-crash")}
+      />
+      <MoveButton 
+        name="Heavy Slam"
+        active={move === "heavy-slam"}
+        handleFunc={() => setMove("heavy-slam")}
+      />
+    </div>
+
+    {#if move === "low-kick" || move === "grass-knot"}
+      <label for="lkgk-target">Target: </label>
+      <select id="lkgk-target" bind:value={target}>
+        {#each allPokemon as pokemon}
+          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+        {/each}
+      </select>
+      
+      {#await targetWeight then targetWeight}
+        {#if target && targetWeight}
+          <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
+          <p>{expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}</p>
+        {/if}
+      {/await}
+    {/if}
+
+    {#if move === "heat-crash" || move === "heavy-slam"}
+      <label for="hchs-user">User: </label>
+      <select id="hchs-user" bind:value={user}>
+        {#each allPokemon as pokemon}
+          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+        {/each}
       </select>
 
-      {#if move === "low-kick" || move === "grass-knot"}
-        <label for="lkgk-target">Target: </label>
-        <select id="lkgk-target" bind:value={target}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select>
-        
+      <label for="hchs-target">Target: </label>
+      <select id="hchs-target" bind:value={target}>
+        {#each allPokemon as pokemon}
+          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+        {/each}
+      </select>
+
+      {#await userWeight then userWeight}
         {#await targetWeight then targetWeight}
-          {#if target && targetWeight}
-            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-            <p>{expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}</p>
+          {#if userWeight && targetWeight}
+            <p>If {expandAPIName(user)} ({userWeight}kg) uses {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
+            <p>{expandAPIName(move)}'s base power will be {calculateHSHCBasePower(userWeight, targetWeight)}</p>
           {/if}
         {/await}
-      {/if}
-
-      {#if move === "heat-crash" || move === "heavy-slam"}
-        <label for="hchs-user">User: </label>
-        <select id="hchs-user" bind:value={user}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select>
-
-        <label for="hchs-target">Target: </label>
-        <select id="hchs-target" bind:value={target}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select>
-
-        {#await userWeight then userWeight}
-          {#await targetWeight then targetWeight}
-            {#if userWeight && targetWeight}
-              <p>If {expandAPIName(user)} ({userWeight}kg) uses {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-              <p>{expandAPIName(move)}'s base power will be {calculateHSHCBasePower(userWeight, targetWeight)}</p>
-            {/if}
-          {/await}
-        {/await}
-      {/if}
-    </form>
-  </section>
+      {/await}
+    {/if}
+  </form>
 </main>
 <footer>
-
+  <p>Data provided by <a href="https://pokeapi.co/">PokéAPI</a></p>
+  <p>Pokémon and Pokémon character names are trademarks of Nintendo. This site is not affiliated with nor endorsed by Nintendo, The Pokémon Company, or Game Freak</p>
 </footer>
+
+<style>
+  header {
+
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .move-buttons {
+    display: flex;
+    justify-content: space-evenly;
+  }
+
+  footer {
+    margin: 0.5rem 0 0 0;
+  }
+  footer p {
+    text-align: center;
+    margin: 0 0 0.5rem;
+  }
+  footer p a,
+  footer p a:visited {
+    color: #000;
+  }
+</style>

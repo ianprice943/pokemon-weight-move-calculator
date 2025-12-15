@@ -3,9 +3,34 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Pokemon Weight Move Calculator</title>
+		<style>
+			:root {
+				font-size: 16px;
+				font-family: Arial, Helvetica, sans-serif;
+
+				--fighting-color: #FF8001;
+				--fire-color: #E42928;
+				--grass-color: #3EA029;
+				--steel-color: #61A0B9;
+			}
+
+			.bg-orange {
+				background-color: var(--fighting-color);
+			}
+			.bg-red {
+				background-color: var(--fire-color);
+			}
+			.bg-green {
+				background-color: var(--grass-color);
+			}
+			.bg-steel {
+				background-color: var(--steel-color);
+			}
+		</style>
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover">
+	<body data-sveltekit-preload-data="hover" class="bg-steel">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
