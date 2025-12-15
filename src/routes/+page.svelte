@@ -1,5 +1,6 @@
 <script>
-    import MoveButton from "$lib/components/MoveButton.svelte";
+  import MoveButton from "$lib/components/MoveButton.svelte";
+  import PokemonDropdown from "$lib/components/PokemonDropdown.svelte";
 
   const basePokeAPIURL = "https://pokeapi.co/api/v2/"
 
@@ -10,11 +11,17 @@
     const [kg, lbs] = convertWeight(hexagrams)
     return kg
   })
+  let userSprite = $derived.by(async () => {
+    return await getPokemonSprite(user)
+  })
   let target = $state("")
   let targetWeight = $derived.by(async () => {
     const hexagrams = await getPokemonWeight(target)
     const [kg, lbs] = convertWeight(hexagrams)
     return kg
+  })
+  let targetSprite = $derived.by(async () => {
+    return await getPokemonSprite(target)
   })
   let allPokemon = $state([])
 
@@ -64,13 +71,6 @@
     return results
   }
 
-  // async function getAllMoveUsers(move) {
-  //   const url = `${basePokeAPIURL}move/${move}`
-  //   const results = await pokeAPIRequest(url)
-
-  //   return results.learned_by_pokemon
-  // }
-
   async function getPokemon(pokemon, providedURL) {
     let url
     if (!providedURL) {
@@ -95,6 +95,11 @@
     const lbs = weight * 0.2204623
 
     return [kg, lbs]
+  }
+
+  async function getPokemonSprite(pokemon) {
+    const pokemonRes = await getPokemon(pokemon)
+    return pokemonRes.sprites.front_default
   }
 
   function calculateLKGKBasePower(weight) {
@@ -138,18 +143,15 @@
 </script>
 
 <header>
-  <h1>Welcome to The Weight Based Moves Calculator!</h1>
+  <h1>Welcome to The Pokémon Weight Based Moves Calculator!</h1>
 </header>
 <main>
-  <h2>Select a move to get started</h2>
-  <form id="moveForm">
-    <!-- <label for="move" class="sr-only">Move: </label>
-    <select id="move" bind:value={move}>
-      <option value="low-kick">Low Kick</option>
-      <option value="grass-knot">Grass Knot</option>
-      <option value="heat-crash">Heat Crash</option>
-      <option value="heavy-slam">Heavy Slam</option>
-    </select> -->
+  <h2
+    class={move ? "hidden" : ""}
+  >
+    Select a move to get started
+  </h2>
+  <div id="move-container">
     <div class="move-buttons">
       <MoveButton 
         name="Low Kick"
@@ -173,56 +175,72 @@
       />
     </div>
 
-    {#if move === "low-kick" || move === "grass-knot"}
-      <label for="lkgk-target">Target: </label>
-      <select id="lkgk-target" bind:value={target}>
-        {#each allPokemon as pokemon}
-          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-        {/each}
-      </select>
-      
-      {#await targetWeight then targetWeight}
-        {#if target && targetWeight}
-          <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-          <p>{expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}</p>
-        {/if}
-      {/await}
-    {/if}
-
-    {#if move === "heat-crash" || move === "heavy-slam"}
-      <label for="hchs-user">User: </label>
-      <select id="hchs-user" bind:value={user}>
-        {#each allPokemon as pokemon}
-          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-        {/each}
-      </select>
-
-      <label for="hchs-target">Target: </label>
-      <select id="hchs-target" bind:value={target}>
-        {#each allPokemon as pokemon}
-          <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-        {/each}
-      </select>
-
-      {#await userWeight then userWeight}
+    <div class="lkgk-container">
+      {#if move === "low-kick" || move === "grass-knot"}
+        <!-- <label for="lkgk-target">Target: </label>
+        <select id="lkgk-target" bind:value={target}>
+          {#each allPokemon as pokemon}
+            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+          {/each}
+        </select> -->
+        <PokemonDropdown
+          allPokemon={allPokemon}
+          value={target}
+        />
+        <img src={targetSprite} alt={expandAPIName(target)} />
+        
         {#await targetWeight then targetWeight}
-          {#if userWeight && targetWeight}
-            <p>If {expandAPIName(user)} ({userWeight}kg) uses {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-            <p>{expandAPIName(move)}'s base power will be {calculateHSHCBasePower(userWeight, targetWeight)}</p>
+          {#if target && targetWeight}
+            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
+            <p>{expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}</p>
           {/if}
         {/await}
-      {/await}
-    {/if}
-  </form>
+      {/if}
+    </div>
+
+    <div class="hchs-container">
+      {#if move === "heat-crash" || move === "heavy-slam"}
+        <label for="hchs-user">User: </label>
+        <select id="hchs-user" bind:value={user}>
+          {#each allPokemon as pokemon}
+            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+          {/each}
+        </select>
+  
+        <label for="hchs-target">Target: </label>
+        <select id="hchs-target" bind:value={target}>
+          {#each allPokemon as pokemon}
+            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
+          {/each}
+        </select>
+  
+        {#await userWeight then userWeight}
+          {#await targetWeight then targetWeight}
+            {#if userWeight && targetWeight}
+              <p>If {expandAPIName(user)} ({userWeight}kg) uses {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
+              <p>{expandAPIName(move)}'s base power will be {calculateHSHCBasePower(userWeight, targetWeight)}</p>
+            {/if}
+          {/await}
+        {/await}
+      {/if}
+    </div>
+  </div>
 </main>
 <footer>
   <p>Data provided by <a href="https://pokeapi.co/">PokéAPI</a></p>
-  <p>Pokémon and Pokémon character names are trademarks of Nintendo. This site is not affiliated with nor endorsed by Nintendo, The Pokémon Company, or Game Freak</p>
+  <p>Pokémon and Pokémon character names are trademarks of Nintendo. This site is not affiliated with nor endorsed by Nintendo, The Pokémon Company, or Game Freak.</p>
 </footer>
 
 <style>
-  header {
+  header,
+  h2 {
+    text-align: center;
+  }
 
+  main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
   }
 
   .sr-only {
@@ -236,10 +254,42 @@
     white-space: nowrap;
     border-width: 0;
   }
+  .hidden {
+    visibility: hidden;
+  }
+
+  #move-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+  }
 
   .move-buttons {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .lkgk-container {
+    max-width: 80%;
+    padding: 1rem 0 0 0;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .lkgk-container {
+      max-width: unset;
+    }
+  }
+
+  .hchs-container {
+    max-width: 80%;
+    padding: 1rem 0 0 0;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
   }
 
   footer {

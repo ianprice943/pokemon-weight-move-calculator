@@ -24,13 +24,23 @@
 			.bg-green {
 				background-color: var(--grass-color);
 			}
-			.bg-steel {
+			.bg-gray {
 				background-color: var(--steel-color);
+			}
+
+			body {
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				margin: 0 auto;
+				max-width: 1440px;
+				background-color: hsl(197, 39%, 75%);
+				height: 100vh;
 			}
 		</style>
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover" class="bg-steel">
+	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
