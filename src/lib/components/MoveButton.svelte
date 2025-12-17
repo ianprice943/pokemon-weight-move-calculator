@@ -41,4 +41,11 @@
   .active {
     outline: 2px solid black;
   }
+
+  @media (max-width: 440px) {
+    button {
+      font-size: 1rem;
+      width: calc(50% - 0.5rem);
+    }
+  }
 </style>

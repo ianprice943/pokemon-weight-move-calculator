@@ -1,26 +1,31 @@
 <script>
   import MoveButton from "$lib/components/MoveButton.svelte";
   import PokemonDropdown from "$lib/components/PokemonDropdown.svelte";
+  import { convertWeight, calculateLKGKBasePower, calculateHSHCBasePower, expandAPIName } from "$lib/utils";
 
   const basePokeAPIURL = "https://pokeapi.co/api/v2/"
 
   let move = $state("")
   let user = $state("")
   let userWeight = $derived.by(async () => {
+    if (!user) return 0
     const hexagrams = await getPokemonWeight(user)
     const [kg, lbs] = convertWeight(hexagrams)
     return kg
   })
   let userSprite = $derived.by(async () => {
+    if (!user) return ""
     return await getPokemonSprite(user)
   })
   let target = $state("")
   let targetWeight = $derived.by(async () => {
+    if (!target) return 0
     const hexagrams = await getPokemonWeight(target)
     const [kg, lbs] = convertWeight(hexagrams)
     return kg
   })
   let targetSprite = $derived.by(async () => {
+    if (!target) return ""
     return await getPokemonSprite(target)
   })
   let allPokemon = $state([])
@@ -84,56 +89,15 @@
   }
 
   async function getPokemonWeight(pokemon) {
+    if (!pokemon) return 0
     const pokemonRes = await getPokemon(pokemon)
     return pokemonRes.weight
   }
 
-  function convertWeight(weight) {
-    console.log('weight to convert: ', weight)
-    // weight comes in hectograms from API
-    const kg = weight / 10
-    const lbs = weight * 0.2204623
-
-    return [kg, lbs]
-  }
-
   async function getPokemonSprite(pokemon) {
+    if (!pokemon) return ""
     const pokemonRes = await getPokemon(pokemon)
     return pokemonRes.sprites.front_default
-  }
-
-  function calculateLKGKBasePower(weight) {
-    console.log('Target weight: ', weight)
-    // assumes kg
-    if (weight >= 200.0) return 120
-    if (weight >= 0.1 && weight <= 9.9) return 20
-    if (weight >= 10.0 && weight <= 24.9) return 40
-    if (weight >= 25.0 && weight <= 49.9) return 60
-    if (weight >= 50.0 && weight <= 99.9) return 80
-    if (weight >= 100.0 && weight <= 199.9) return 100
-  }
-
-  function calculateHSHCBasePower(userWeight, targetWeight) {
-    console.log('User weight: ', userWeight)
-    console.log('Target weight: ', targetWeight)
-    // assumes kg
-    const ratio = userWeight / targetWeight
-    console.log('Weight ratio: ', ratio)
-
-    if (ratio < 2) return 40
-    if (ratio >= 5) return 120
-    if (ratio < 3 && ratio >= 2) return 60
-    if (ratio < 4 && ratio >= 3) return 80
-    if (ratio < 5 && ratio >= 4) return 100
-  }
-
-  function expandAPIName(name) {
-    const nameSplit = name.split("-")
-    const nameArrCapped = nameSplit.map(name => { 
-      return name.charAt(0).toUpperCase() + name.slice(1)
-    })
-
-    return nameArrCapped.join(" ")
   }
 
   $effect(async () => {
@@ -177,22 +141,23 @@
 
     <div class="lkgk-container">
       {#if move === "low-kick" || move === "grass-knot"}
-        <!-- <label for="lkgk-target">Target: </label>
-        <select id="lkgk-target" bind:value={target}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select> -->
+      <div class="lkgk-selection">
         <PokemonDropdown
           allPokemon={allPokemon}
-          value={target}
+          bind:value={target}
         />
-        <img src={targetSprite} alt={expandAPIName(target)} />
+        {#await targetSprite then targetSprite}
+          {#if target && targetSprite}
+            <img src={targetSprite} alt={expandAPIName(target)} />
+          {:else}
+            <div class="sprite-placeholder" aria-hidden="true"></div>
+          {/if}
+        {/await}
+      </div>
         
         {#await targetWeight then targetWeight}
           {#if target && targetWeight}
-            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-            <p>{expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}</p>
+            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg), {expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}.</p>
           {/if}
         {/await}
       {/if}
@@ -235,6 +200,7 @@
   header,
   h2 {
     text-align: center;
+    margin: 0;
   }
 
   main {
@@ -271,17 +237,17 @@
   }
 
   .lkgk-container {
-    max-width: 80%;
+    width: 400px;
     padding: 1rem 0 0 0;
     margin: 0 auto;
     display: flex;
+    flex-direction: column;
     justify-content: center;
   }
 
-  @media (max-width: 768px) {
-    .lkgk-container {
-      max-width: unset;
-    }
+  .lkgk-selection {
+    display: flex;
+    gap: 5%;
   }
 
   .hchs-container {
@@ -302,5 +268,42 @@
   footer p a,
   footer p a:visited {
     color: #000;
+  }
+
+  @media (max-width: 440px) {
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      padding: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .move-buttons {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .lkgk-container {
+      width: 100%;
+    }
+
+    .lkgk-selection {
+      flex-direction: column-reverse;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .sprite-placeholder {
+      aspect-ratio: 1/1;
+      width: 50%;
+    }
+
+    .lkgk-selection img {
+      width: 50%;
+    }
   }
 </style>
