@@ -157,7 +157,8 @@
         
         {#await targetWeight then targetWeight}
           {#if target && targetWeight}
-            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg), {expandAPIName(move)}'s base power will be {calculateLKGKBasePower(targetWeight)}.</p>
+            <p>Using {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
+            <p>{expandAPIName(move)}'s base power will be <span style="text-decoration: underline;">{calculateLKGKBasePower(targetWeight)}</span></p>
           {/if}
         {/await}
       {/if}
@@ -165,25 +166,44 @@
 
     <div class="hchs-container">
       {#if move === "heat-crash" || move === "heavy-slam"}
-        <label for="hchs-user">User: </label>
-        <select id="hchs-user" bind:value={user}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select>
-  
-        <label for="hchs-target">Target: </label>
-        <select id="hchs-target" bind:value={target}>
-          {#each allPokemon as pokemon}
-            <option value={pokemon.name}>{expandAPIName(pokemon.name)}</option>
-          {/each}
-        </select>
+        <div class="hchs-selection-container">
+          <div class="hchs-selection">
+            <PokemonDropdown
+              allPokemon={allPokemon}
+              bind:value={user}
+            />
+            {#await userSprite then userSprite}
+              {#if user && userSprite}
+                <img src={userSprite} alt={expandAPIName(user)} />
+              {:else if user}
+                <div class="sprite-placeholder-missing">Sprite Data Missing</div>
+              {:else}
+                <div class="sprite-placeholder" aria-hidden="true"></div>
+              {/if}
+            {/await}
+          </div>
+          <div class="hchs-selection">
+            <PokemonDropdown
+              allPokemon={allPokemon}
+              bind:value={target}
+            />
+            {#await targetSprite then targetSprite}
+              {#if target && targetSprite}
+                <img src={targetSprite} alt={expandAPIName(target)} />
+              {:else if target}
+                <div class="sprite-placeholder-missing">Sprite Data Missing</div>
+              {:else}
+                <div class="sprite-placeholder" aria-hidden="true"></div>
+              {/if}
+            {/await}
+          </div>
+        </div>
   
         {#await userWeight then userWeight}
           {#await targetWeight then targetWeight}
-            {#if userWeight && targetWeight}
+            {#if userWeight && targetWeight && user && target}
               <p>If {expandAPIName(user)} ({userWeight}kg) uses {expandAPIName(move)} on {expandAPIName(target)} ({targetWeight}kg):</p>
-              <p>{expandAPIName(move)}'s base power will be {calculateHSHCBasePower(userWeight, targetWeight)}</p>
+              <p>{expandAPIName(move)}'s base power will be <span style="text-decoration: underline;">{calculateHSHCBasePower(userWeight, targetWeight)}</span></p>
             {/if}
           {/await}
         {/await}
@@ -245,17 +265,51 @@
     justify-content: center;
   }
 
+  .lkgk-container p {
+    padding: 0;
+    margin: 0.25rem 0;
+    text-align: center;
+  }
+
   .lkgk-selection {
     display: flex;
     gap: 5%;
   }
 
   .hchs-container {
-    max-width: 80%;
+    width: 400px;
     padding: 1rem 0 0 0;
     margin: 0 auto;
     display: flex;
+    flex-direction: column;
     justify-content: center;
+  }
+
+  .hchs-selection-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hchs-selection {
+    display: flex;
+    gap: 5%;
+  }
+
+  .hchs-container p {
+    padding: 0;
+    margin: 0.25rem 0;
+    text-align: center;
+  }
+
+  .sprite-placeholder,
+  .sprite-placeholder-missing {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    aspect-ratio: 1/1;
+    width: 96px;
   }
 
   footer {
@@ -297,12 +351,29 @@
       align-items: center;
     }
 
+    .hchs-container {
+      width: 100%;
+      padding: 0 0 1rem 0;
+    }
+
+    .hchs-selection {
+      flex-direction: column-reverse;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.5rem 0 0 0;
+    }
+
     .sprite-placeholder {
-      aspect-ratio: 1/1;
       width: 50%;
     }
 
-    .lkgk-selection img {
+    .sprite-placeholder-missing {
+      width: 100%;
+      aspect-ratio: unset;
+      padding: 0.5rem 0 0 0;
+    }
+
+    img {
       width: 50%;
     }
   }

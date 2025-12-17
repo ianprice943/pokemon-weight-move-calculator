@@ -17,11 +17,8 @@ export function calculateLKGKBasePower(weight) {
 }
 
 export function calculateHSHCBasePower(userWeight, targetWeight) {
-  console.log('User weight: ', userWeight)
-  console.log('Target weight: ', targetWeight)
   // assumes kg
   const ratio = userWeight / targetWeight
-  console.log('Weight ratio: ', ratio)
 
   if (ratio < 2) return 40
   if (ratio >= 5) return 120
